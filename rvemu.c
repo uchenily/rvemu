@@ -66,19 +66,19 @@ int pending_exception; /* used during MMU exception handling */
 uint32_t pending_tval;
 
 /* CSRs */
-uint32_t mstatus;
-uint32_t mtvec;
-uint32_t mscratch;
-uint32_t mepc;
-uint32_t mcause;
-uint32_t mtval;
-uint32_t mhartid; /* ro */
-uint32_t misa;
-uint32_t mie;
-uint32_t mip;
-uint32_t medeleg;
-uint32_t mideleg;
-uint32_t mcounteren;
+uint32_t mstatus;    // machine status register
+uint32_t mtvec;      // machine trap-vector base-address register
+uint32_t mscratch;   // machine srcatch register
+uint32_t mepc;       // machine exception program counter
+uint32_t mcause;     // machine cause register
+uint32_t mtval;      // machine trap value register
+uint32_t mhartid;    // hart ID register (readonly)
+uint32_t misa;       // machine ISA register
+uint32_t mie;        // machine interrupt enable register
+uint32_t mip;        // machine interrupt pending register
+uint32_t medeleg;    // machine exception delegation register
+uint32_t mideleg;    // machine interrupt delegation register
+uint32_t mcounteren; // machine counter-enable register
 
 uint32_t stvec;
 uint32_t sscratch;
@@ -1102,7 +1102,7 @@ void execute_instruction() {
         break;
 
     default:
-		printf("Illegal instruction: 0x%08x\n", insn);
+        printf("Illegal instruction: 0x%08x\n", insn);
         raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
         return;
     }
@@ -1196,7 +1196,7 @@ void riscv_interpret() {
          * mtime counter */
         mtime = get_clock() / 100ll;
 
-        /* for reproducible debug runs, you can use a fixed fixed
+        /* for reproducible debug runs, you can use a fixed
          * increment per instruction */
 #else
         mtime += 10;
