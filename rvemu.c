@@ -725,18 +725,35 @@ void execute_instruction() {
 
     case 0x6f: /* jal */
         // jump and link
-        imm = ((insn >> (31 - 20)) & (1 << 20)) | ((insn >> (21 - 1)) & 0x7fe) |
-              ((insn >> (20 - 11)) & (1 << 11)) | (insn & 0xff000);
+        // 注意, imm[0] == 0 (=> 2字节对齐)
+        // imm[20]      insn[31]
+        // imm[10:1]    insn[30:21]
+        // imm[11]      insn[20]
+        // imm[19:12]   insn[19:12]
+        // imm = imm[20] << 20 | imm[19:12] << 12 | imm[11] << 11 | imm[10:1]
+        // insn[31] << 20 | insn[19:12] << 12 | insn[20] << 11 | insn[30:21]
+        // insn   右移  取n位 目标位置
+        // ((insn >> 31) & 1) << 20
+        // ((insn >> 12) & 0xff) << 12
+        // ((insn >> 20) & 1) << 11
+        // ((insn >> 21) & 0x3ff) << 1
+        imm = ((insn >> 31) & 1) << 20 | ((insn >> 12) & 0xff) << 12 |
+              ((insn >> 20) & 1) << 11 | ((insn >> 21) & 0x3ff) << 1;
+        // 立即数总共21位. 现在得到的是21位的无符号数表示形式.
+        // imm是int32_t(有符号数), >>是执行算术右移(正数高位补0, 负数高位补1)
+        // 下面是转为有符号数表示形式, 先扩展为32位, 然后算术右移.
         imm = (imm << 11) >> 11;
         reg[rd] = pc + 4;
         next_pc = (int32_t)(pc + imm);
         break;
 
     case 0x67: /* jalr */
+        // jump and link register
+        // 把pc设置为x[rs1]+sign-extend(offset)
+        // 把计算出的地址的最低有效位设为0, 并将原 pc+4 的值写入x[rd]
         imm = (int32_t)insn >> 20;
-        val = pc + 4;
         next_pc = (int32_t)(reg[rs1] + imm) & ~1;
-        reg[rd] = val;
+        reg[rd] = pc + 4;
         break;
 
     case 0x63: /* BRANCH */
