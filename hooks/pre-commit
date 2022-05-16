@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+export PATH=`git rev-parse --git-dir`/../tools/:$PATH
+
+git clang-format --extensions c,h --style file -v
+# Possible predefined styles:
+# LLVM
+# Google
+# Chromium
+# Mozilla
+# WebKit
+
+return_code=$?
+if [[ $return_code == 33 ]]
+then
+ echo "Nothing needs to be reformatted!"
+ exit 0
+fi
+
+echo -e "Would you like to continue to commit (y/n): \c"
+
+# Make sure under any mode, we can read user input.
+exec < /dev/tty
+read cont
+
+if [ "$cont" == "y" ]
+then
+ exit 0
+fi
+
+exit 1

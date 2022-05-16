@@ -708,26 +708,27 @@ void execute_instruction() {
     rs2 = (insn >> 20) & 0b00011111;
 
 #if 0
-	printf("insn: 0x%08x\n", insn);
+    printf("insn: 0x%08x\n", insn);
 #endif
     switch (opcode) {
     case 0x37: /* lui */
-		// load upper immediate
-		// 高20位无符号立即数存放到reg[rd]
+        // load upper immediate
+        // 高20位无符号立即数存放到reg[rd]
         reg[rd] = (int32_t)(insn & 0xfffff000);
         break;
 
     case 0x17: /* auipc */
-		// add upper immediate to pc
-		// 高20位立即数加上pc存放到reg[rd]
-		reg[rd] = (int32_t)(pc + (int32_t)(insn & 0xfffff000));
+        // add upper immediate to pc
+        // 高20位立即数加上pc存放到reg[rd]
+        reg[rd] = (int32_t)(pc + (int32_t)(insn & 0xfffff000));
         break;
 
     case 0x6f: /* jal */
+        // jump and link
         imm = ((insn >> (31 - 20)) & (1 << 20)) | ((insn >> (21 - 1)) & 0x7fe) |
               ((insn >> (20 - 11)) & (1 << 11)) | (insn & 0xff000);
         imm = (imm << 11) >> 11;
-		reg[rd] = pc + 4;
+        reg[rd] = pc + 4;
         next_pc = (int32_t)(pc + imm);
         break;
 
@@ -735,7 +736,7 @@ void execute_instruction() {
         imm = (int32_t)insn >> 20;
         val = pc + 4;
         next_pc = (int32_t)(reg[rs1] + imm) & ~1;
-		reg[rd] = val;
+        reg[rd] = val;
         break;
 
     case 0x63: /* BRANCH */
@@ -824,7 +825,7 @@ void execute_instruction() {
             raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
             return;
         }
-		reg[rd] = val;
+        reg[rd] = val;
         break;
 
     case 0x23: /* STORE */
@@ -902,7 +903,7 @@ void execute_instruction() {
             val = reg[rs1] & imm;
             break;
         }
-		reg[rd] = val;
+        reg[rd] = val;
         break;
 
     case 0x33: /* OP */
@@ -951,7 +952,7 @@ void execute_instruction() {
                 return;
             }
         }
-		reg[rd] = val;
+        reg[rd] = val;
         break;
 
     case 0x73: /* SYSTEM */
@@ -974,7 +975,7 @@ void execute_instruction() {
                 raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
                 return;
             }
-			reg[rd] = val2;
+            reg[rd] = val2;
             if (err > 0) {
                 /* pc = pc + 4; */
             }
@@ -1001,7 +1002,7 @@ void execute_instruction() {
             } else {
                 err = 0;
             }
-			reg[rd] = val2;
+            reg[rd] = val2;
             break;
 
         case 0:
@@ -1101,8 +1102,9 @@ void execute_instruction() {
         return;
     }
 
-	// reg[zero]寄存器清零
-	if (reg[0] != 0) reg[0] = 0;
+    // reg[zero]寄存器清零
+    if (reg[0] != 0)
+        reg[0] = 0;
 }
 
 /* returns realtime in nanoseconds */
