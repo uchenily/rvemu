@@ -760,6 +760,10 @@ void execute_instruction() {
         funct3 = (insn >> 12) & 7;
         switch (funct3 >> 1) {
         case 0: /* beq/bne */
+            // branch if equal
+            // if (rs1 == rs2) pc += sign-extend(offset)
+            // branch if not equal
+            // if (rs1 != rs2) pc += sign-extend(offset)
             cond = (reg[rs1] == reg[rs2]);
             break;
         case 2: /* blt/bge */
@@ -772,11 +776,27 @@ void execute_instruction() {
             raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
             return;
         }
+        // funct3 = insn[14:12]
+        // funct3 & 1 表示第12位
         cond ^= (funct3 & 1);
         if (cond) {
-            imm = ((insn >> (31 - 12)) & (1 << 12)) |
-                  ((insn >> (25 - 5)) & 0x7e0) | ((insn >> (8 - 1)) & 0x1e) |
-                  ((insn << (11 - 7)) & (1 << 11));
+            // 注意, offset[0] == 0 (=> 2字节对齐)
+            // offset[12]       insn[31]
+            // offset[10:5]     insn[30:25]
+            // offset[4:1]      insn[11:8]
+            // offset[11]       insn[7]
+            // offset = offset[12] << 12 | offset[11] << 11 |
+            //          offset[10:5] << 5 | offset[4:1] << 1
+            // ((insn >> 31) & 1) << 12
+            // ((insn >> 7) & 1) << 11
+            // ((insn >> 25) & 0x3f) << 5
+            // ((insn >> 8) & 0xf) << 1
+            imm = ((insn >> 31) & 1) << 12 | ((insn >> 7) & 1) << 11 |
+                  ((insn >> 25) & 0x3f) << 5 | ((insn >> 8) & 0xf) << 1;
+            // 立即数总共13位. 现在得到的是13位的无符号数表示形式.
+            // imm是int32_t(有符号数), >>是执行算术右移(正数高位补0,
+            // 负数高位补1).
+            // 下面是转为有符号数表示形式, 先扩展为32位(<< 19), 然后算术右移.
             imm = (imm << 19) >> 19;
             next_pc = (int32_t)(pc + imm);
             break;
