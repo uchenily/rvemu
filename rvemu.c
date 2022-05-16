@@ -172,10 +172,9 @@ int ctz32(uint32_t a) {
     return 32;
 }
 
-#define SSTATUS_MASK0                                                          \
+#define SSTATUS_MASK                                                           \
     (MSTATUS_UIE | MSTATUS_SIE | MSTATUS_UPIE | MSTATUS_SPIE | MSTATUS_SPP |   \
      MSTATUS_FS | MSTATUS_XS | MSTATUS_SUM | MSTATUS_MXR)
-#define SSTATUS_MASK SSTATUS_MASK0
 
 #define MSTATUS_MASK                                                           \
     (MSTATUS_UIE | MSTATUS_SIE | MSTATUS_MIE | MSTATUS_UPIE | MSTATUS_SPIE |   \
@@ -215,7 +214,7 @@ void invalid_csr(uint32_t *pval, uint32_t csr) {
 
 /* return -1 if invalid CSR. 0 if OK. 'will_write' indicate that the
    csr will be written after (used for CSR access check) */
-int csr_read(uint32_t *pval, uint32_t csr, int will_write) {
+int csr_read(uint32_t *pval, uint32_t csr, bool will_write) {
     uint32_t val;
 
     if (((csr & 0xc00) == 0xc00) && will_write)
@@ -713,21 +712,22 @@ void execute_instruction() {
 #endif
     switch (opcode) {
     case 0x37: /* lui */
-        if (rd != 0)
-            reg[rd] = (int32_t)(insn & 0xfffff000);
+		// load upper immediate
+		// 高20位无符号立即数存放到reg[rd]
+        reg[rd] = (int32_t)(insn & 0xfffff000);
         break;
 
     case 0x17: /* auipc */
-        if (rd != 0)
-            reg[rd] = (int32_t)(pc + (int32_t)(insn & 0xfffff000));
+		// add upper immediate to pc
+		// 高20位立即数加上pc存放到reg[rd]
+		reg[rd] = (int32_t)(pc + (int32_t)(insn & 0xfffff000));
         break;
 
     case 0x6f: /* jal */
         imm = ((insn >> (31 - 20)) & (1 << 20)) | ((insn >> (21 - 1)) & 0x7fe) |
               ((insn >> (20 - 11)) & (1 << 11)) | (insn & 0xff000);
         imm = (imm << 11) >> 11;
-        if (rd != 0)
-            reg[rd] = pc + 4;
+		reg[rd] = pc + 4;
         next_pc = (int32_t)(pc + imm);
         break;
 
@@ -735,8 +735,7 @@ void execute_instruction() {
         imm = (int32_t)insn >> 20;
         val = pc + 4;
         next_pc = (int32_t)(reg[rs1] + imm) & ~1;
-        if (rd != 0)
-            reg[rd] = val;
+		reg[rd] = val;
         break;
 
     case 0x63: /* BRANCH */
@@ -825,8 +824,7 @@ void execute_instruction() {
             raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
             return;
         }
-        if (rd != 0)
-            reg[rd] = val;
+		reg[rd] = val;
         break;
 
     case 0x23: /* STORE */
@@ -904,8 +902,7 @@ void execute_instruction() {
             val = reg[rs1] & imm;
             break;
         }
-        if (rd != 0)
-            reg[rd] = val;
+		reg[rd] = val;
         break;
 
     case 0x33: /* OP */
@@ -954,8 +951,7 @@ void execute_instruction() {
                 return;
             }
         }
-        if (rd != 0)
-            reg[rd] = val;
+		reg[rd] = val;
         break;
 
     case 0x73: /* SYSTEM */
@@ -978,8 +974,7 @@ void execute_instruction() {
                 raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
                 return;
             }
-            if (rd != 0)
-                reg[rd] = val2;
+			reg[rd] = val2;
             if (err > 0) {
                 /* pc = pc + 4; */
             }
@@ -1006,8 +1001,7 @@ void execute_instruction() {
             } else {
                 err = 0;
             }
-            if (rd != 0)
-                reg[rd] = val2;
+			reg[rd] = val2;
             break;
 
         case 0:
@@ -1106,6 +1100,9 @@ void execute_instruction() {
         raise_exception(CAUSE_ILLEGAL_INSTRUCTION, insn);
         return;
     }
+
+	// reg[zero]寄存器清零
+	if (reg[0] != 0) reg[0] = 0;
 }
 
 /* returns realtime in nanoseconds */
