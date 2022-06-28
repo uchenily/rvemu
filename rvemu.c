@@ -804,6 +804,7 @@ void execute_instruction() {
         break;
 
     case 0x03: /* LOAD */
+        // 从内存读取数据
         funct3 = (insn >> 12) & 7;
         imm = (int32_t)insn >> 20;
         addr = reg[rs1] + imm;
@@ -866,6 +867,7 @@ void execute_instruction() {
         break;
 
     case 0x23: /* STORE */
+        // 向内存写数据
         funct3 = (insn >> 12) & 7;
         imm = rd | ((insn >> (25 - 5)) & 0xfe0);
         imm = (imm << 20) >> 20;
@@ -1074,8 +1076,7 @@ void execute_instruction() {
             } break;
 
             case 0x105: /* wfi */
-                /* wait for interrupt: it is allowed to execute
-                 * it as nop */
+                /* wait for interrupt: it is allowed to execute it as nop */
                 break;
 
             case 0x302: /* mret */
