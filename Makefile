@@ -1,4 +1,4 @@
-all: rvemu
+all: rvemu test1 test2
 
 rvemu: rvemu.c rvos/link.lds
 	gcc -Og -g -Wall -lelf rvemu.c -o rvemu
@@ -14,10 +14,16 @@ run:
 	./rvemu rvos/kernel.elf
 .PHONY: run
 
+run1:
+	./rvemu test1
+run2:
+	./rvemu test2
+.PHONY: run1 run2
+
 debug:
 	gdb ./rvemu -x gdbinit
 .PHONY: debug
 
 clean:
-	rm rvemu test1
+	rm rvemu test1 test2
 .PHONY: clean
