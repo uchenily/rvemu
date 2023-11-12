@@ -27,3 +27,7 @@ debug:
 clean:
 	rm rvemu test1 test2
 .PHONY: clean
+
+
+lint:
+	pre-commit run -a
